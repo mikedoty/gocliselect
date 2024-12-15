@@ -34,7 +34,6 @@ type MenuItem struct {
 }
 
 func NewMenu(prompt string) *Menu {
-	fmt.Println("ok")
 	return &Menu{
 		Prompt:    prompt,
 		MenuItems: make([]*MenuItem, 0),
