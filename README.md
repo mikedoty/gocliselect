@@ -29,7 +29,10 @@ menu.AddItem("Cyan", "cyan")
 To display the menu and away the user choice call `Display()`
 
 ```go
-choice := menu.Display()
+choice, err := menu.Display()
+if err != nil {
+    // Handle error - usually an io.EOF from ctrl+c or ctrl+d
+}
 ```
 
 ## Example
@@ -38,6 +41,7 @@ package main
 
 import (
     "fmt"
+    "io"
     "github.com/nexidian/gocliselect"
 )
 
@@ -50,7 +54,15 @@ func main() {
     menu.AddItem("Yellow", "yellow")
     menu.AddItem("Cyan", "cyan")
 
-    choice := menu.Display()
+    choice, err := menu.Display()
+    if err != nil {
+        if err == io.EOF {
+            fmt.Println("interrupted")
+            os.Exit(0)
+        } else {
+            panic(err)
+        }
+    }
 
     fmt.Printf("Choice: %s\n", choice)
 }
