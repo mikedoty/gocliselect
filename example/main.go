@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/nexidian/gocliselect"
+
+	"github.com/mikedoty/gocliselect"
 )
 
 func main() {

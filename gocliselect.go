@@ -2,9 +2,11 @@ package gocliselect
 
 import (
 	"fmt"
+	"io"
+	"log"
+
 	"github.com/buger/goterm"
 	"github.com/pkg/term"
-	"log"
 )
 
 // Raw input keycodes
@@ -12,26 +14,29 @@ var up byte = 65
 var down byte = 66
 var escape byte = 27
 var enter byte = 13
-var keys = map[byte]bool {
-	up: true,
+var ctrlC byte = 3
+var ctrlD byte = 4
+var keys = map[byte]bool{
+	up:   true,
 	down: true,
 }
 
 type Menu struct {
-	Prompt  	string
-	CursorPos 	int
-	MenuItems 	[]*MenuItem
+	Prompt    string
+	CursorPos int
+	MenuItems []*MenuItem
 }
 
 type MenuItem struct {
-	Text     string
-	ID       string
-	SubMenu  *Menu
+	Text    string
+	ID      string
+	SubMenu *Menu
 }
 
 func NewMenu(prompt string) *Menu {
+	fmt.Println("ok")
 	return &Menu{
-		Prompt: prompt,
+		Prompt:    prompt,
 		MenuItems: make([]*MenuItem, 0),
 	}
 }
@@ -40,7 +45,7 @@ func NewMenu(prompt string) *Menu {
 func (m *Menu) AddItem(option string, id string) *Menu {
 	menuItem := &MenuItem{
 		Text: option,
-		ID: id,
+		ID:   id,
 	}
 
 	m.MenuItems = append(m.MenuItems, menuItem)
@@ -56,12 +61,12 @@ func (m *Menu) renderMenuItems(redraw bool) {
 		//
 		// This is done by sending a VT100 escape code to the terminal
 		// @see http://www.climagic.org/mirrors/VT100_Escape_Codes.html
-		fmt.Printf("\033[%dA", len(m.MenuItems) -1)
+		fmt.Printf("\033[%dA", len(m.MenuItems)-1)
 	}
 
 	for index, menuItem := range m.MenuItems {
 		var newline = "\n"
-		if index == len(m.MenuItems) - 1 {
+		if index == len(m.MenuItems)-1 {
 			// Adding a new line on the last option will move the cursor position out of range
 			// For out redrawing
 			newline = ""
@@ -80,13 +85,13 @@ func (m *Menu) renderMenuItems(redraw bool) {
 
 // Display will display the current menu options and awaits user selection
 // It returns the users selected choice
-func (m *Menu) Display() string {
+func (m *Menu) Display() (string, error) {
 	defer func() {
 		// Show cursor again.
 		fmt.Printf("\033[?25h")
 	}()
 
-	fmt.Printf("%s\n", goterm.Color(goterm.Bold(m.Prompt) + ":", goterm.CYAN))
+	fmt.Printf("%s\n", goterm.Color(goterm.Bold(m.Prompt)+":", goterm.CYAN))
 
 	m.renderMenuItems(false)
 
@@ -96,11 +101,13 @@ func (m *Menu) Display() string {
 	for {
 		keyCode := getInput()
 		if keyCode == escape {
-			return ""
+			return "", nil
 		} else if keyCode == enter {
 			menuItem := m.MenuItems[m.CursorPos]
 			fmt.Println("\r")
-			return menuItem.ID
+			return menuItem.ID, nil
+		} else if keyCode == ctrlC || keyCode == ctrlD {
+			return "", io.EOF
 		} else if keyCode == up {
 			m.CursorPos = (m.CursorPos + len(m.MenuItems) - 1) % len(m.MenuItems)
 			m.renderMenuItems(true)
