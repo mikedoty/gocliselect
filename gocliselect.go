@@ -16,9 +16,17 @@ var escape byte = 27
 var enter byte = 13
 var ctrlC byte = 3
 var ctrlD byte = 4
+var pgUp byte = 53
+var pgDown byte = 54
+var home byte = 72
+var end byte = 70
 var keys = map[byte]bool{
-	up:   true,
-	down: true,
+	up:     true,
+	down:   true,
+	pgUp:   true,
+	pgDown: true,
+	home:   true,
+	end:    true,
 }
 
 type Menu struct {
@@ -113,6 +121,26 @@ func (m *Menu) Display() (string, error) {
 		} else if keyCode == down {
 			m.CursorPos = (m.CursorPos + 1) % len(m.MenuItems)
 			m.renderMenuItems(true)
+		} else if keyCode == home {
+			m.CursorPos = 0
+			m.renderMenuItems(true)
+		} else if keyCode == end {
+			m.CursorPos = len(m.MenuItems) - 1
+			m.renderMenuItems(true)
+		} else if keyCode == pgUp {
+			m.CursorPos -= 3
+			if m.CursorPos < 0 {
+				m.CursorPos = 0
+			}
+			m.renderMenuItems(true)
+		} else if keyCode == pgDown {
+			m.CursorPos += 3
+			if m.CursorPos >= len(m.MenuItems) {
+				m.CursorPos = len(m.MenuItems) - 1
+			}
+			m.renderMenuItems(true)
+		} else {
+			// fmt.Printf("grr %v\r\n", keyCode)
 		}
 	}
 }
@@ -139,6 +167,7 @@ func getInput() byte {
 	// For example the left arrow key is '<esc>[A' while the right is '<esc>[C'
 	// See: https://en.wikipedia.org/wiki/ANSI_escape_code
 	if read == 3 {
+		// fmt.Printf("ugh %+v\r\n", readBytes)
 		if _, ok := keys[readBytes[2]]; ok {
 			return readBytes[2]
 		}
